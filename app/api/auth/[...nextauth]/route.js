@@ -1,11 +1,12 @@
-import NextAuth from "next-auth/next";
-import Credentials from "next-auth/providers/credentials";
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import prismadb from "@/lib/prismadb";
 import { compare } from "bcrypt";
 
-export default NextAuth({
+// Create a handler function for NextAuth
+const handler = NextAuth({
   providers: [
-    Credentials({
+    CredentialsProvider({
       id: "credentials",
       name: "Credentials",
       credentials: {
@@ -20,15 +21,13 @@ export default NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("email and password required");
+          throw new Error("Email and password required");
         }
         const user = await prismadb.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
+          where: { email: credentials.email },
         });
         if (!user || !user.hashedPassword) {
-          throw new Error("Email now exist");
+          throw new Error("Email does not exist");
         }
 
         const isCorrectPassword = await compare(
@@ -36,22 +35,25 @@ export default NextAuth({
           user.hashedPassword
         );
         if (!isCorrectPassword) {
-          throw new Error("Incorrect Password");
+          throw new Error("Incorrect password");
         }
 
         return user;
       },
     }),
   ],
-  pages:{
+  pages: {
     signIn: '/auth',
   },
   debug: process.env.NODE_ENV === 'development',
-  session:{
+  session: {
     strategy: 'jwt',
   },
-  jwt:{
-    secret: process.env.NEXTAUTH_JWT_SECRET
+  jwt: {
+    secret: process.env.NEXTAUTH_JWT_SECRET,
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
 });
+
+// Export the methods Next.js expects in its app directory routing
+export { handler as GET, handler as POST };

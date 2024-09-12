@@ -4,10 +4,10 @@ import prismadb from '@/lib/prismadb';
 
 export async function POST(req: Request) {
     try {
-        const { email, userName, password } = await req.json(); // Extract userName from the payload
+        const { email, name, password } = await req.json(); // Extract name from the payload
 
-        if (!email || !userName || !password) {
-            return NextResponse.json({ error: 'Email, UserName, and Password are required' }, { status: 400 });
+        if (!email || !name || !password) {
+            return NextResponse.json({ error: 'Email, name, and Password are required' }, { status: 400 });
         }
 
         const existingUser = await prismadb.user.findUnique({
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
         const user = await prismadb.user.create({
             data: {
                 email,
-                name: userName, // Save userName as name in the database
+                name: name, // Save name as name in the database
                 hashedPassword,
                 image: " ",
                 emailVerified: new Date(),
